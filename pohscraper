@@ -1,0 +1,36 @@
+import json
+from urllib.request import urlopen
+
+print("PoH.py")
+base_url = "https://api.poh.dev/profiles?order_by=registered_time&order_direction=desc&include_unregistered=false"
+
+#function that recursively calls itself until there are no more matches
+# ________________           ________________          ________________
+#|                |         |                |        |                |
+#| NextPage(url1) | --->    | NextPage(url2) | --->   |  NextPage(...) |
+#|________________|         |________________|        |________________|
+def NextPage(url):
+    response = urlopen(url)
+    data = json.load(response)
+
+    with open("out.txt", "a", encoding="utf8") as output_file:   
+        output_file.write("PageUrl: {page_url} \n".format(page_url=url))
+
+        for i in range(len(data["profiles"])):
+            output_file.write("ID: {index} Address: {address} \n".format(index=i, address=data["profiles"][i]["eth_address"]))
+
+    for field, value in data.items():
+        if(field == "meta" and value["has_more"] == True):
+            nexturl = value["next_url"]
+            return NextPage(nexturl)
+        elif (field == "meta" and value["has_more"] == False):
+            print("done")
+            return
+
+while True:
+    NextPage(base_url)
+    break
+
+#credits to:
+#me the J
+
